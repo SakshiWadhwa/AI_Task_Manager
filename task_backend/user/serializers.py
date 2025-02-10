@@ -1,10 +1,11 @@
-from django.contrib.auth.models import User
-from rest_framework import serializers
-from django.core.exceptions import ValidationError
 import re
 
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
