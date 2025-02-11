@@ -33,6 +33,7 @@ def user_login(request):
             tokens = get_tokens_for_user(user)
             return Response({
                 "message": "Login successful",
+                "user_id": user.id,
                 "tokens": tokens
             }, status=200)
         return Response(serializer.errors, status=400)
