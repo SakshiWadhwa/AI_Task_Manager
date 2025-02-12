@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (create_category, create_task, delete_task, list_category, delete_category,
+from .views import (create_category, create_task, delete_task, list_category, delete_category, get_due_soon_tasks,
                     list_tasks, retrieve_task, update_category, update_task, tasks_by_category, tasks_filter_based_on_category)
 
 urlpatterns = [
@@ -17,5 +17,7 @@ urlpatterns = [
 
     path('categories/task_by_category/<int:category_id>/', tasks_by_category, name='tasks-by-category'),
     path('categories/filter_task/', tasks_filter_based_on_category, name='filter-tasks-by-category'),
+
+    path('due_soon/', get_due_soon_tasks, name='tasks-due-soon'),
 
 ]

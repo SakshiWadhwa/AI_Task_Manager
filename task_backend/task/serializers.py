@@ -15,7 +15,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ['id', 'user', 'title', 'description', 'status', 'created_at', 'updated_at', 'category', 'category_id']
+        fields = ['id', 'user', 'title', 'description', 'status', 'due_date', 'created_at', 'updated_at', 'category', 'category_id']
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']  # These fields shouldn't be modified by the user
 
     def validate_title(self, value):

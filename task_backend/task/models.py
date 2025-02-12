@@ -17,6 +17,7 @@ class Task(models.Model):
      
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
+    due_date = models.DateTimeField(null=True, blank=True)
 
     title = models.CharField(null=False)
     description = models.CharField(blank=True, null=True)

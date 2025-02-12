@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
@@ -172,3 +174,24 @@ def tasks_filter_based_on_category(request):
     tasks = Task.objects.filter(category=category, user=request.user)
     serializer = TaskSerializer(tasks, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_due_soon_tasks(request):
+    """
+    Get tasks that are due today or tomorrow.
+    """
+    # today = timezone.now().date()
+    # tomorrow = today + timedelta(days=1)
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow_end = today_start + timedelta(days=1, hours=23, minutes=59, seconds=59)
+
+    
+    # Filter tasks that are due today or tomorrow
+    tasks_due_soon = Task.objects.filter(
+        due_date__gte=today_start,
+        due_date__lte=tomorrow_end
+    ).order_by('due_date')
+
+    serializer = TaskSerializer(tasks_due_soon, many=True)
+    return Response(serializer.data)
