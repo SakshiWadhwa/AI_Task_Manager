@@ -1,10 +1,21 @@
 from rest_framework import serializers
-from .models import Task
+from .models import Task, Category
+
+class CategorySerializer(serializers.ModelSerializer):
+    # convert Category model instances into JSON format
+    class Meta:
+        model = Category
+        fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)  # Show category details
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), source='category', write_only=True
+    )
+
     class Meta:
         model = Task
-        fields = ['id', 'user', 'title', 'description', 'status', 'created_at', 'updated_at']
+        fields = ['id', 'user', 'title', 'description', 'status', 'created_at', 'updated_at', 'category', 'category_id']
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']  # These fields shouldn't be modified by the user
 
     def validate_title(self, value):
