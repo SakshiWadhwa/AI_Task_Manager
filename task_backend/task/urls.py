@@ -1,7 +1,9 @@
 from django.urls import path
 
 from .views import (create_category, create_task, delete_task, list_category, delete_category, get_due_soon_tasks,
-                    list_tasks, retrieve_task, update_category, update_task, tasks_by_category, tasks_filter_based_on_category)
+                    list_tasks, retrieve_task, update_category, update_task, tasks_by_category, filter_tasks,
+                    get_assigned_tasks, assign_unassign_task
+                    )
 
 urlpatterns = [
     path('', list_tasks, name='list-tasks'),  # GET: List all tasks
@@ -16,8 +18,10 @@ urlpatterns = [
     path('categories/<int:category_id>/delete/', delete_category, name='delete-category'),  # DELETE: Delete a category
 
     path('categories/task_by_category/<int:category_id>/', tasks_by_category, name='tasks-by-category'),
-    path('categories/filter_task/', tasks_filter_based_on_category, name='filter-tasks-by-category'),
+    path('filter_task/', filter_tasks, name='filter-task'),
 
     path('due_soon/', get_due_soon_tasks, name='tasks-due-soon'),
+    path('<int:task_id>/assign/', assign_unassign_task, name='assign-unassign-task'),
+    path('assigned_task_list/', get_assigned_tasks, name='get-assigned-tasks'),
 
 ]

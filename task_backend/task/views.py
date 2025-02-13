@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
-from .models import Task, Category
+from .models import Task, Category, User
 from .serializers import CategorySerializer, TaskSerializer
 
 
@@ -194,4 +194,104 @@ def get_due_soon_tasks(request):
     ).order_by('due_date')
 
     serializer = TaskSerializer(tasks_due_soon, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filter_tasks(request):
+    """
+    Retrieve tasks, optionally filtering by category and/or status.
+    """
+    # Start with the tasks for the authenticated user
+    tasks = Task.objects.filter(user=request.user)
+
+    # Filter by category if provided
+    category_id = request.query_params.get('category_id', None)
+    if category_id:
+        tasks = tasks.filter(category_id=category_id)
+
+    # Filter by status if provided
+    status_filter = request.query_params.get('status', None)
+    if status_filter:
+        if status_filter not in ['pending', 'in_progress', 'completed']:
+            return Response(
+                {"detail": "Invalid status filter. Choose from: pending, in_progress, completed."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        tasks = tasks.filter(status=status_filter)
+
+    # Filter by due_date if provided
+    due_date_filter = request.query_params.get('due_date', None)
+    if due_date_filter:
+        try:
+            due_date = timezone.datetime.strptime(due_date_filter, "%Y-%m-%d").date()
+            tasks = tasks.filter(due_date=due_date)
+        except ValueError:
+            return Response(
+                {"detail": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+    # Optionally, filter tasks that are due within the next 24 hours
+    due_within_24h = request.query_params.get('due_within_24h', None)
+    if due_within_24h and due_within_24h.lower() == 'true':
+        now = timezone.now()
+        tomorrow = now + timezone.timedelta(days=1)
+        tasks = tasks.filter(due_date__gte=now.date(), due_date__lte=tomorrow.date())
+
+    # Serialize the filtered task data
+    serializer = TaskSerializer(tasks, many=True)
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def assign_unassign_task(request, task_id):
+    """
+    Assign or unassign a task to a user.
+    """
+    try:
+        task = Task.objects.get(id=task_id)  # Fetch the task
+    except Task.DoesNotExist:
+        return Response({"detail": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check if the user is the task owner or an admin (permission check)
+    if task.user != request.user and not request.user.is_staff:
+        return Response({"detail": "You do not have permission to modify this task."},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    # Get the user to assign or unassign from request data
+    user_id = request.data.get("user_id", None)
+    
+    # Handle unassignment if no user_id is provided
+    if user_id is None:
+        task.assigned_to = None
+        task.save()
+        # Return task data after unassigning
+        return Response(TaskSerializer(task).data, status=status.HTTP_200_OK)
+    
+    try:
+        assigned_user = User.objects.get(id=user_id)  # Fetch the user to assign
+    except User.DoesNotExist:
+        return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # If task is already assigned, you might want to handle the replacement logic (optional)
+    task.assigned_to = assigned_user
+    task.save()
+
+    # Return task data after assignment
+    return Response(TaskSerializer(task).data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_assigned_tasks(request):
+    """
+    Get the list of tasks assigned to the currently authenticated user.
+    """
+    # Get the tasks assigned to the logged-in user
+    tasks = Task.objects.filter(assigned_to=request.user)
+
+    # Serialize the tasks
+    serializer = TaskSerializer(tasks, many=True)
+
     return Response(serializer.data)

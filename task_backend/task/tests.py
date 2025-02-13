@@ -71,11 +71,84 @@ class TaskCategoryAPITestCase(APITestCase):
 
     def test_filter_tasks_by_category(self):
         """Test filtering tasks by category"""
-        response = self.client.get(f"/task/categories/task_by_category/{self.category.id}/")
+        response = self.client.get(f"/task/filter_task/?category_id={self.category.id}")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.data), 0)
         self.assertEqual(response.data[0]["category"]["name"], "Work")
+    
+    def test_filter_tasks_by_status(self):
+        """Test filtering tasks by status"""
+        response_status = self.client.get(f"/task/filter_task/?status=pending")
+        
+        # Verify status filtering works
+        self.assertEqual(response_status.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response_status.data), 0)
+        self.assertEqual(response_status.data[0]["status"], "pending")
+
+    def test_filter_tasks_by_category_and_status(self):
+        """Test filtering tasks by both category and status"""
+        response_both = self.client.get(f"/task/filter_task/?category_id={self.category.id}&status=pending")
+        
+        # Verify both filters work together
+        self.assertEqual(response_both.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response_both.data), 0)
+        self.assertEqual(response_both.data[0]["category"]["id"], self.category.id)
+        self.assertEqual(response_both.data[0]["status"], "pending")
+    
+    def test_filter_tasks_by_due_date(self):
+        """Test filtering tasks by due date"""
+        due_date = timezone.now().date()  # Use today's date
+        # Create a task with today's due date
+        task_today = Task.objects.create(
+            title="Task Due Today",
+            description="This task is due today.",
+            category=self.category,
+            user=self.user,
+            due_date=due_date,
+            status="pending"
+        )
+
+        # Query the endpoint with the due_date filter
+        response = self.client.get(f"/task/filter_task/?due_date={due_date}")
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 0)
+        
+        # Check that the returned task matches the expected due_date format (ISO 8601 format)
+        returned_due_date = response.data[0]['due_date']
+        
+        # Ensure the returned due date matches the ISO format: 'YYYY-MM-DDT00:00:00Z'
+        expected_due_date = due_date.strftime('%Y-%m-%d') + 'T00:00:00Z'
+        self.assertEqual(returned_due_date, expected_due_date)
+
+    def test_filter_tasks_by_invalid_due_date_format(self):
+        """Test filtering tasks by an invalid due date format"""
+        response = self.client.get(f"/task/filter_task/?due_date=2025-13-01")  # Invalid month
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], "Invalid date format. Use YYYY-MM-DD.")
+
+    def test_filter_tasks_due_within_24h(self):
+        """Test filtering tasks that are due within the next 24 hours"""
+        now = timezone.now()
+        tomorrow_start = now + timedelta(days=1)
+        
+        # Create a task due within the next 24 hours
+        task = Task.objects.create(
+            title="Task Due Soon",
+            description="Task that will be due within 24 hours",
+            category=self.category,
+            user=self.user,
+            due_date=now,
+            status="pending",
+        )
+        
+        response = self.client.get(f"/task/filter_task/?due_within_24h=true")
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 0)
+        self.assertEqual(response.data[0]['id'], task.id)
 
     def test_get_due_soon_tasks(self):
         """Test retrieving tasks due soon (today/tomorrow)."""
@@ -155,3 +228,22 @@ class TaskCategoryAPITestCase(APITestCase):
             from_email = settings.DEFAULT_FROM_EMAIL,
             recipient_list = [test_user.email],
         )
+
+    def test_assign_task_to_user(self):
+        """Test assigning a task to another user"""
+        response = self.client.patch(f"/task/{self.task.id}/assign/", {"user_id": self.user.id})
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.assigned_to, self.user)
+    
+    def test_unassign_task(self):
+        """Test unassigning a task (removing assigned user)"""
+        self.task.assigned_to = self.user
+        self.task.save()
+        response = self.client.patch(f"/task/{self.task.id}/assign/", {})
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.task.refresh_from_db()
+        self.assertIsNone(self.task.assigned_to)
+    

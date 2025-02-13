@@ -15,13 +15,15 @@ class Task(models.Model):
         ('completed', 'Completed'),
     ]
      
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='tasks', on_delete=models.CASCADE)  # Assign task to user
+
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
     due_date = models.DateTimeField(null=True, blank=True)
 
     title = models.CharField(null=False)
     description = models.CharField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    assigned_to = models.ForeignKey(User, related_name='assigned_tasks', null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
