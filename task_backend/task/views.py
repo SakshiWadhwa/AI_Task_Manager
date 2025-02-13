@@ -322,3 +322,21 @@ def task_comments(request, task_id):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def delete_comment(request, comment_id):
+    """
+    API to delete a comment.
+    Only the comment owner can delete it.
+    """
+    try:
+        comment = TaskComment.objects.get(id=comment_id)
+    except TaskComment.DoesNotExist:
+        return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if comment.user != request.user:
+        return Response({"detail": "You do not have permission to delete this comment."}, 
+                        status=status.HTTP_403_FORBIDDEN)
+
+    comment.delete()
+    return Response({"detail": "Comment deleted successfully."}, status=status.HTTP_204_NO_CONTENT)

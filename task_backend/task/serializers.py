@@ -7,15 +7,24 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = '__all__'
 
+class TaskCommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  # Returns the username instead of just the user ID
+
+    class Meta:
+        model = TaskComment
+        fields = ['id', 'task', 'user', 'text', 'timestamp']
+        read_only_fields = ['id', 'task', 'user', 'timestamp']
+
 class TaskSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)  # Show category details
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), source='category', write_only=True
     )
+    comments = TaskCommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Task
-        fields = ['id', 'user', 'title', 'description', 'status', 'due_date', 'assigned_to', 'created_at', 'updated_at', 'category', 'category_id']
+        fields = ['id', 'user', 'title', 'description', 'status', 'due_date', 'assigned_to', 'created_at', 'updated_at', 'category', 'category_id', 'comments']
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']  # These fields shouldn't be modified by the user
 
     def validate_title(self, value):
@@ -31,10 +40,3 @@ class TaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid status. Choose from: pending, in_progress, completed.")
         return value
     
-class TaskCommentSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()  # Returns the username instead of just the user ID
-
-    class Meta:
-        model = TaskComment
-        fields = ['id', 'task', 'user', 'text', 'timestamp']
-        read_only_fields = ['id', 'task', 'user', 'timestamp']
