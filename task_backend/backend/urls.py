@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.conf import settings
+from django.conf.urls.static import static
 
 from rest_framework import permissions
 
@@ -47,3 +49,7 @@ urlpatterns = [
     path("user/", include("user.urls")),  # Include the user URLs
     path("task/", include("task.urls")),  # Include the user URLs
 ]
+
+# Ensure Django serves media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

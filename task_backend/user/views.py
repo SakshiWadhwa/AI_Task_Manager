@@ -26,18 +26,33 @@ def user_register(request):
             return Response({"message": "User registered successfully!", "tokens": tokens}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
+@api_view(["POST"])
 def user_login(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data['user']
+            user = serializer.validated_data["user"]
             tokens = get_tokens_for_user(user)
-            return Response({
-                "message": "Login successful",
-                "user_id": user.id,
-                "tokens": tokens
-            }, status=200)
+
+            # Fetch the user profile
+            profile = UserProfile.objects.filter(user=user).first()
+            profile_data = UserProfileSerializer(profile, context={"request": request}).data if profile else None
+
+            return Response(
+                {
+                    "message": "Login successful",
+                    "tokens": tokens,
+                    "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "profile": profile_data,
+                    },
+                },
+                status=200,
+            )
         return Response(serializer.errors, status=400)
 
 @api_view(['POST'])

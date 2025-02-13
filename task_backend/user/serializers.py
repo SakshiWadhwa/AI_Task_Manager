@@ -52,7 +52,15 @@ class UserLoginSerializer(serializers.Serializer):
         return data
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+
     class Meta:
         model = UserProfile
-        fields = ["avatar", "bio", "phone_number", "location"]
+        fields = ['bio', 'avatar', 'phone_number', 'location']
+
+    def get_avatar(self, obj):
+        request = self.context.get('request')
+        if obj.avatar:
+            return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
+        return None
 
