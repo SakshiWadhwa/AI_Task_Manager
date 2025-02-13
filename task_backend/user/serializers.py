@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
+from .models import UserProfile
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
@@ -49,4 +50,9 @@ class UserLoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ["avatar", "bio", "phone_number", "location"]
 
