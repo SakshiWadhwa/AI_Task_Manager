@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import (create_category, create_task, delete_task, list_category, delete_category, get_due_soon_tasks,
                     list_tasks, retrieve_task, update_category, update_task, tasks_by_category, filter_tasks,
-                    get_assigned_tasks, assign_unassign_task
+                    get_assigned_tasks, assign_unassign_task, task_comments
                     )
 
 urlpatterns = [
@@ -23,5 +23,7 @@ urlpatterns = [
     path('due_soon/', get_due_soon_tasks, name='tasks-due-soon'),
     path('<int:task_id>/assign/', assign_unassign_task, name='assign-unassign-task'),
     path('assigned_task_list/', get_assigned_tasks, name='get-assigned-tasks'),
+
+    path("<int:task_id>/comments/", task_comments, name="task-comments"),
 
 ]

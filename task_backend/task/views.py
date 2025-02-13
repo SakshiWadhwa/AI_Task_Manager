@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
-from .models import Task, Category, User
-from .serializers import CategorySerializer, TaskSerializer
+from .models import Task, Category, User, TaskComment
+from .serializers import CategorySerializer, TaskSerializer, TaskCommentSerializer
 
 
 # Create your views here.
@@ -295,3 +295,30 @@ def get_assigned_tasks(request):
     serializer = TaskSerializer(tasks, many=True)
 
     return Response(serializer.data)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
+def task_comments(request, task_id):
+    """
+    Retrieve all comments for a task or add a new comment.
+    """
+    try:
+        task = Task.objects.get(id=task_id)
+    except Task.DoesNotExist:
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        # Get all comments for the task
+        comments = TaskComment.objects.filter(task=task).order_by("-timestamp")
+        serializer = TaskCommentSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        # Create a new comment
+        serializer = TaskCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(task=task, user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    

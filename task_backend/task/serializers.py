@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task, Category
+from .models import Task, Category, TaskComment
 
 class CategorySerializer(serializers.ModelSerializer):
     # convert Category model instances into JSON format
@@ -30,3 +30,11 @@ class TaskSerializer(serializers.ModelSerializer):
         if value not in valid_statuses:
             raise serializers.ValidationError("Invalid status. Choose from: pending, in_progress, completed.")
         return value
+    
+class TaskCommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  # Returns the username instead of just the user ID
+
+    class Meta:
+        model = TaskComment
+        fields = ['id', 'task', 'user', 'text', 'timestamp']
+        read_only_fields = ['id', 'task', 'user', 'timestamp']
