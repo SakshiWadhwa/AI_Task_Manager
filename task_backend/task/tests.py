@@ -1,5 +1,5 @@
 from django.core.mail import send_mail
-from django.contrib.auth.models import User
+from django.conf import settings
 from rest_framework.test import APITestCase
 from unittest.mock import patch
 from rest_framework import status
@@ -15,7 +15,7 @@ class TaskCategoryAPITestCase(APITestCase):
     
     def setUp(self):
         """Set up test data for each test"""
-        self.user = User.objects.create_user(username="testuser", password="password123")
+        self.user = settings.AUTH_USER_MODEL.objects.create_user(email="testuser@gmail.com", password="password123")
         self.client.force_authenticate(user=self.user)  # Authenticate user
         self.category = Category.objects.create(name="Work")
         self.task = Task.objects.create(
@@ -202,8 +202,7 @@ class TaskCategoryAPITestCase(APITestCase):
         mock_now.return_value = timezone.make_aware(timezone.datetime(2025, 2, 12, 18, 50, 32))
         
         # Create a test user
-        test_user = User.objects.create_user(
-            username='testuser2', 
+        test_user = settings.AUTH_USER_MODEL.objects.create_user( 
             email='sakshiwadhwabuffer@gmail.com', 
             password='password'
         )

@@ -1,18 +1,17 @@
 import re
 
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
-from .models import UserProfile
+from .models import UserProfile, CustomUser
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
     
     class Meta:
-        model = User
+        model = CustomUser
         fields = ['username', 'email', 'password', 'password2']
         
     def validate_email(self, value):
@@ -32,19 +31,19 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')  # Remove the extra password field
-        user = User.objects.create_user(**validated_data)  # Create user with hashed password
+        user = CustomUser.objects.create_user(**validated_data)  # Create user with hashed password
         return user
 
 class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.CharField()
     password = serializers.CharField()
 
     def validate(self, data):
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
 
         # Authenticate the user
-        user = authenticate(username=username, password=password)
+        user = authenticate(email=email, password=password)
         if user is None:
             raise AuthenticationFailed('Invalid credentials')
 

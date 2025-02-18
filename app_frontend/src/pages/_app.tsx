@@ -1,14 +1,15 @@
 // pages/_app.tsx
 import React from 'react';
+import { AppProps } from 'next/app';
 import Layout from '../components/Layout';
-import '../styles/global.css'; // Your global styles (if any)
+import '../styles/global.css'; // Make sure global styles are included
 
-function MyApp({ Component, pageProps }: { Component: React.FC; pageProps: any }) {
+const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
     <Layout>
       <Component {...pageProps} />
     </Layout>
   );
-}
+};
 
 export default MyApp;

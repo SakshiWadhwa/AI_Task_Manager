@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     "rest_framework_simplejwt.token_blacklist",
     "django_celery_beat",
+    "corsheaders",
 
     #third-party libs
     "rest_framework",
@@ -48,6 +49,8 @@ INSTALLED_APPS = [
     "user",
     "drf_yasg",
 ]
+
+AUTH_USER_MODEL = "user.CustomUser"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -57,6 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -82,7 +86,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'taskdb',  # Replace with your DB name
+        'NAME': 'taskaidb',  # Replace with your DB name
         'USER': 'postgres',  # Replace with your DB user
         'PASSWORD': 'mypassword',  # Replace with your DB password
         'HOST': 'localhost',  # Use IP if running PostgreSQL on another machine
@@ -110,6 +114,11 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
 }
+
+AUTHENTICATION_BACKENDS = [
+    'user.authentication.EmailBackend',  # Custom email backend
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -145,4 +154,11 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Allow frontend requests
+]
 

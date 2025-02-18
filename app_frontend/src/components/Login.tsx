@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { loginUser } from '../services/authService';
@@ -19,9 +18,7 @@ const Login = () => {
 
       // Redirect on successful login
       if (response) {
-        localStorage.setItem("authToken", response.tokens.access);
-        localStorage.setItem("refreshToken", response.tokens.refresh);
-        router.push('/tasks'); // Redirect to dashboard or home
+        router.push('/dashboard'); // Redirect to dashboard or home
       }
     } catch (err) {
       // Show error message if login fails
