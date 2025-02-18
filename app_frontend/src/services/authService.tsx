@@ -2,6 +2,15 @@ import axios from 'axios';
 
 const API_URL = 'http://127.0.0.1:8000'; // Replace with your actual API URL
 
+export const registerUser = async (email: string, password: string, password2: string) => {
+  const response = await axios.post(`${API_URL}/user/register/`, {
+    email,
+    password,
+    password2
+  });
+  return response.data;
+}
+
 // Login API call
 export const loginUser = async (email: string, password: string) => {
   try {
