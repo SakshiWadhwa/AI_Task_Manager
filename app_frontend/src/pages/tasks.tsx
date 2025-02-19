@@ -14,6 +14,8 @@ const TaskList = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 5;
 
   useEffect(() => {
     const getTasks = async () => {
@@ -47,6 +49,25 @@ const TaskList = () => {
     return 0;
   });
 
+  // Pagination logic
+  const indexOfLastTask = currentPage * tasksPerPage;
+  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+  const currentTasks = sortedTasks.slice(indexOfFirstTask, indexOfLastTask);
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(tasks.length / tasksPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+
+
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
       <h1 className="text-2xl font-bold mb-6 text-center">Task List</h1>
@@ -64,11 +85,11 @@ const TaskList = () => {
         </select>
       </div>
 
-      {sortedTasks.length === 0 ? (
+      {currentTasks.length === 0 ? (
         <p className="text-center text-gray-500">No tasks available.</p>
       ) : (
         <ul className="space-y-4">
-          {sortedTasks.map((task) => (
+          {currentTasks.map((task) => (
             <li key={task.id} className="p-4 border rounded-lg shadow-md">
               <h2 className="text-lg font-semibold">{task.title}</h2>
               <p className="text-sm text-gray-600">{task.description}</p>
@@ -82,6 +103,25 @@ const TaskList = () => {
           ))}
         </ul>
       )}
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center mt-6 space-x-4">
+      <button
+          onClick={prevPage}
+          disabled={currentPage === 1}
+          className={`p-2 border rounded ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"}`}
+        >
+          Previous
+        </button>
+        <span>Page {currentPage} of {Math.ceil(tasks.length / tasksPerPage)}</span>
+        <button
+          onClick={nextPage}
+          disabled={currentPage === Math.ceil(tasks.length / tasksPerPage)}
+          className={`p-2 border rounded ${currentPage === Math.ceil(tasks.length / tasksPerPage) ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"}`}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
