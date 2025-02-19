@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { fetchTasks } from "../services/taskService";
+import { fetchFilteredTasks } from "../services/taskFilterService"
+
+import TaskFilter from "../components/TaskFilter";
 
 interface Task {
   id: number;
@@ -7,6 +10,7 @@ interface Task {
   description: string;
   status: string;
   due_date: string;
+  category: { [key: string]: any };
 }
 
 const TaskList = () => {
@@ -16,16 +20,24 @@ const TaskList = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 5;
+  const [filters, setFilters] = useState<{ category_id?: string; status?: string; due_date?: string }>({});
 
   useEffect(() => {
     const getTasks = async () => {
+      setLoading(true);
       try {
-        const data = await fetchTasks();
+        let data;
+        if (Object.keys(filters).length > 0) {
+          data = await fetchFilteredTasks(filters);
+        } else {
+          data = await fetchTasks();
+        }
         
         // Ensure unique tasks by using a Map
         const uniqueTasks = Array.from(new Map(data.map(task => [task.id, task])).values());
         
         setTasks(uniqueTasks);
+        setError(null);
       } catch (err) {
         setError("Failed to fetch tasks.");
       } finally {
@@ -34,7 +46,7 @@ const TaskList = () => {
     };
 
     getTasks();
-  }, []);
+  }, [filters]);
 
   if (loading) return <p className="text-center">Loading tasks...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
@@ -71,6 +83,7 @@ const TaskList = () => {
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
       <h1 className="text-2xl font-bold mb-6 text-center">Task List</h1>
+      <TaskFilter onFilterChange={setFilters} />
 
       {/* Sorting Dropdown */}
       <div className="mb-4">
@@ -98,6 +111,9 @@ const TaskList = () => {
               </p>
               <p className="text-sm text-gray-500">
                 <strong>Due Date:</strong> {new Date(task.due_date).toLocaleDateString()}
+              </p>
+              <p className="text-sm text-gray-500">
+                <strong>Category:</strong> {task.category.name}
               </p>
             </li>
           ))}

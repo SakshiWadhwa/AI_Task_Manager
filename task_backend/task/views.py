@@ -207,12 +207,12 @@ def filter_tasks(request):
 
     # Filter by category if provided
     category_id = request.query_params.get('category_id', None)
-    if category_id:
+    if category_id and category_id != "undefined":
         tasks = tasks.filter(category_id=category_id)
 
     # Filter by status if provided
     status_filter = request.query_params.get('status', None)
-    if status_filter:
+    if status_filter and status_filter != "undefined":
         if status_filter not in ['pending', 'in_progress', 'completed']:
             return Response(
                 {"detail": "Invalid status filter. Choose from: pending, in_progress, completed."},
@@ -222,7 +222,7 @@ def filter_tasks(request):
 
     # Filter by due_date if provided
     due_date_filter = request.query_params.get('due_date', None)
-    if due_date_filter:
+    if due_date_filter and due_date_filter != "undefined":
         try:
             due_date = timezone.datetime.strptime(due_date_filter, "%Y-%m-%d").date()
             tasks = tasks.filter(due_date=due_date)
