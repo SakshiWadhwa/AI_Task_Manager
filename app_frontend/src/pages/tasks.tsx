@@ -37,6 +37,7 @@ const TaskList = () => {
         const uniqueTasks = Array.from(new Map(data.map(task => [task.id, task])).values());
         
         setTasks(uniqueTasks);
+        setCurrentPage(1);
         setError(null);
       } catch (err) {
         setError("Failed to fetch tasks.");
@@ -113,7 +114,7 @@ const TaskList = () => {
                 <strong>Due Date:</strong> {new Date(task.due_date).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-500">
-                <strong>Category:</strong> {task.category.name}
+                <strong>Category:</strong> <span className="text-blue-500">{task.category.name}</span>
               </p>
             </li>
           ))}
