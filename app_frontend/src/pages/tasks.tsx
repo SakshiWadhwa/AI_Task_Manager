@@ -49,7 +49,7 @@ const TaskList = () => {
     getTasks();
   }, [filters]);
 
-  if (loading) return <p className="text-center">Loading tasks...</p>;
+  if (loading) return <p className="text-center text-gray-500">Loading tasks...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
   // Sorting function
@@ -82,17 +82,17 @@ const TaskList = () => {
 
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
-      <h1 className="text-2xl font-bold mb-6 text-center">Task List</h1>
-      <TaskFilter onFilterChange={setFilters} />
+    <div className="max-w-5xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-700">Task List</h1>
+      <TaskFilter filters={filters} onFilterChange={setFilters} />
 
       {/* Sorting Dropdown */}
-      <div className="mb-4">
-        <label className="mr-2">Sort By:</label>
+      <div className="mb-4 flex items-center space-x-2">
+        <label className="text-gray-600 font-medium">Sort By:</label>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded focus:ring focus:ring-blue-300 text-gray-500"
         >
           <option value="due_date">Due Date</option>
           <option value="status">Status</option>
@@ -104,10 +104,10 @@ const TaskList = () => {
       ) : (
         <ul className="space-y-4">
           {currentTasks.map((task) => (
-            <li key={task.id} className="p-4 border rounded-lg shadow-md">
-              <h2 className="text-lg font-semibold">{task.title}</h2>
+            <li key={task.id} className="p-5 bg-gray-100 border rounded-lg shadow-md hover:shadow-lg transition">
+              <h2 className="text-lg font-semibold text-gray-700">{task.title}</h2>
               <p className="text-sm text-gray-600">{task.description}</p>
-              <p className="text-sm">
+              <p className="text-sm text-gray-500">
                 <strong>Status:</strong> <span className="text-blue-500">{task.status}</span>
               </p>
               <p className="text-sm text-gray-500">
