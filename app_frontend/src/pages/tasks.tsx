@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { fetchTasks } from "../services/taskService";
+import { fetchTasks, createTask } from "../services/taskService";
 import { fetchFilteredTasks } from "../services/taskFilterService"
 
 import TaskFilter from "../components/TaskFilter";
+import TaskForm from "../components/TaskForm";
 
 interface Task {
   id: number;
@@ -21,6 +22,7 @@ const TaskList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 5;
   const [filters, setFilters] = useState<{ category_id?: string; status?: string; due_date?: string }>({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const getTasks = async () => {
@@ -48,6 +50,17 @@ const TaskList = () => {
 
     getTasks();
   }, [filters]);
+
+  const handleNewTaskSave = async (taskData: Task) => {
+    console.log("Sending task data:", taskData);
+    try {
+      const newTask = await createTask(taskData);
+      setTasks([...tasks, newTask]); // Update task list
+      setIsModalOpen(false);
+    } catch (err) {
+      alert("Failed to create task.");
+    }
+  };
 
   if (loading) return <p className="text-center text-gray-500">Loading tasks...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
@@ -86,13 +99,32 @@ const TaskList = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-gray-700">Task List</h1>
       <TaskFilter filters={filters} onFilterChange={setFilters} />
 
+      {/* New Task Button */}
+      <div className="mb-4 text-right">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+        >
+          New Task
+        </button>
+      </div>
+
+      {/* Task Form Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <TaskForm onSave={handleNewTaskSave} onCancel={() => setIsModalOpen(false)} />
+          </div>
+        </div>
+      )}
+
       {/* Sorting Dropdown */}
       <div className="mb-4 flex items-center space-x-2">
         <label className="text-gray-600 font-medium">Sort By:</label>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="border p-2 rounded focus:ring focus:ring-blue-300 text-gray-500"
+          className="border p-2 rounded focus:ring focus:ring-blue-300"
         >
           <option value="due_date">Due Date</option>
           <option value="status">Status</option>
