@@ -37,4 +37,37 @@ export const createTask = async (taskData: any) => {
         throw error;
     }
 };
+
+export const updateTasks = async (taskId: number, updatedTaskData: object) => {
+    const token = localStorage.getItem("authToken");
+
+    try {
+        const response = await axios.put(`${API_URL}/task/${taskId}/update/`, updatedTaskData, { 
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating task:", error);
+        throw error;
+    }
+};
+
+export const deleteTask = async (taskId: number) => {
+    const token = localStorage.getItem("authToken");
+  
+    try {
+      await axios.delete(`${API_URL}/task/${taskId}/delete/`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      throw error;
+    }
+  };
   

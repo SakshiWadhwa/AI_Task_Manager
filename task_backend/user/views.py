@@ -6,8 +6,8 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import UserProfile
-from .serializers import UserLoginSerializer, UserRegistrationSerializer, UserProfileSerializer
+from .models import UserProfile, CustomUser
+from .serializers import UserLoginSerializer, UserRegistrationSerializer, UserProfileSerializer, UserSerializer
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -72,23 +72,28 @@ def user_logout(request):
     except TokenError as e:
         return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'PUT', 'PATCH'])
+@api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def user_profile(request):
     # user_profile = request.user.profile  # Get the logged-in user's profile
     user = request.user
 
     # Ensure the user has a profile
-    profile, created = UserProfile.objects.get_or_create(user=user)
-
-    if request.method == 'GET':
-        serializer = UserProfileSerializer(profile)
-        return Response(serializer.data)
-
-    elif request.method in ['PUT', 'PATCH']:
+    profile = UserProfile.objects.get_or_create(user=user)
+    if request.method in ['PUT', 'PATCH']:
         serializer = UserProfileSerializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def retrieve_users(request):
+    """
+    Retrieve a list of users that can be assigned tasks.
+    """
+    users = CustomUser.objects.all()
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
     

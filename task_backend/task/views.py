@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from .models import Task, Category, TaskComment
 from .serializers import CategorySerializer, TaskSerializer, TaskCommentSerializer
@@ -250,6 +251,7 @@ def assign_unassign_task(request, task_id):
     """
     Assign or unassign a task to a user.
     """
+    print("taskid: ",task_id )
     try:
         task = Task.objects.get(id=task_id)  # Fetch the task
     except Task.DoesNotExist:
@@ -270,9 +272,10 @@ def assign_unassign_task(request, task_id):
         # Return task data after unassigning
         return Response(TaskSerializer(task).data, status=status.HTTP_200_OK)
     
+    User = get_user_model()  # Get the actual user model
     try:
-        assigned_user = settings.AUTH_USER_MODEL.objects.get(id=user_id)  # Fetch the user to assign
-    except settings.AUTH_USER_MODEL.DoesNotExist:
+        assigned_user = User.objects.get(id=user_id)# Fetch the user to assign
+    except User.DoesNotExist:
         return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
     # If task is already assigned, you might want to handle the replacement logic (optional)

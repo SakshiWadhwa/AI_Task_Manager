@@ -21,7 +21,7 @@ urlpatterns = [
     path('filter_task/', filter_tasks, name='filter-task'),
 
     path('due_soon/', get_due_soon_tasks, name='tasks-due-soon'),
-    path('<int:task_id>/assign/', assign_unassign_task, name='assign-unassign-task'),
+    path('<int:task_id>/assign_unassign_task/', assign_unassign_task, name='assign-unassign-task'),
     path('assigned_task_list/', get_assigned_tasks, name='get-assigned-tasks'),
 
     path("<int:task_id>/comments/", task_comments, name="task-comments"),

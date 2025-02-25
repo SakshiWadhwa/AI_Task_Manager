@@ -62,4 +62,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if obj.avatar:
             return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
         return None
+    
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email'] 
 

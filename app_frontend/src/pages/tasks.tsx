@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchTasks, createTask } from "../services/taskService";
+import { fetchTasks, createTask, updateTasks, deleteTask } from "../services/taskService";
 import { fetchFilteredTasks } from "../services/taskFilterService"
 
 import TaskFilter from "../components/TaskFilter";
@@ -12,6 +12,8 @@ interface Task {
   status: string;
   due_date: string;
   category: { [key: string]: any };
+  assigned_to_id: { [key: string]: any },
+
 }
 
 const TaskList = () => {
@@ -23,6 +25,7 @@ const TaskList = () => {
   const tasksPerPage = 5;
   const [filters, setFilters] = useState<{ category_id?: string; status?: string; due_date?: string }>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null); // New state for editing task
 
   useEffect(() => {
     const getTasks = async () => {
@@ -59,6 +62,33 @@ const TaskList = () => {
       setIsModalOpen(false);
     } catch (err) {
       alert("Failed to create task.");
+    }
+  };
+
+  const handleTaskEdit = (task: Task) => {
+    setEditingTask(task); // Set task for editing
+    setIsModalOpen(true);  // Open the modal
+  };
+
+  const handleTaskUpdate = async (updatedTaskData: Task) => {
+    try {
+      const updatedTask = await updateTasks(updatedTaskData.id, updatedTaskData); // Update the task
+      setTasks(tasks.map(task => (task.id === updatedTask.id ? updatedTask : task))); // Update the task list
+      setIsModalOpen(false); // Close modal
+      setEditingTask(null); // Reset editing state
+    } catch (err) {
+      alert("Failed to update task.");
+    }
+  };
+
+  const handleTaskDelete = async (taskId: number) => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      try {
+        await deleteTask(taskId);
+        setTasks(tasks.filter((task) => task.id !== taskId)); // Remove task from list
+      } catch (error) {
+        console.error("Failed to delete task", error);
+      }
     }
   };
 
@@ -112,8 +142,12 @@ const TaskList = () => {
       {/* Task Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <TaskForm onSave={handleNewTaskSave} onCancel={() => setIsModalOpen(false)} />
+          <div className="bg-blue p-6 rounded-lg shadow-lg max-w-md w-full">
+            <TaskForm 
+              task={editingTask} // Pass the task being edited
+              onSave={editingTask ? handleTaskUpdate : handleNewTaskSave} // Conditional handler
+              onCancel={() => setIsModalOpen(false)} 
+            />
           </div>
         </div>
       )}
@@ -148,6 +182,25 @@ const TaskList = () => {
               <p className="text-sm text-gray-500">
                 <strong>Category:</strong> <span className="text-blue-500">{task.category.name}</span>
               </p>
+              <p className="text-sm text-gray-500">
+                <strong>Assigned To:</strong> {task.assigned_to_id ? task.assigned_to_id.username : "Unassigned"}
+              </p>
+
+              {/* Edit Button */}
+              <div className="flex justify-between mt-2">
+                <button
+                  onClick={() => handleTaskEdit(task)}
+                  className="text-blue-500 hover:text-blue-700 mt-2"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleTaskDelete(task.id)}
+                  className="bg-red-500 text-white  px-3 py-1 rounded hover:bg-red-600 transition"
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>
