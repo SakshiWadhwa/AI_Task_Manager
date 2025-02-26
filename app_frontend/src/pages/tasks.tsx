@@ -4,6 +4,7 @@ import { fetchFilteredTasks } from "../services/taskFilterService"
 
 import TaskFilter from "../components/TaskFilter";
 import TaskForm from "../components/TaskForm";
+import {fetchUsers, assignTask} from "../services/authService" ;
 
 interface Task {
   id: number;
@@ -12,8 +13,13 @@ interface Task {
   status: string;
   due_date: string;
   category: { [key: string]: any };
-  assigned_to_id: { [key: string]: any },
+  assigned_to: { [key: string]: any },
 
+}
+
+interface Users {
+  id: string;
+  email: string;
 }
 
 const TaskList = () => {
@@ -26,6 +32,8 @@ const TaskList = () => {
   const [filters, setFilters] = useState<{ category_id?: string; status?: string; due_date?: string }>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null); // New state for editing task
+  const [users, setUsers] = useState<Users[]>([]);
+
 
   useEffect(() => {
     const getTasks = async () => {
@@ -53,6 +61,20 @@ const TaskList = () => {
 
     getTasks();
   }, [filters]);
+
+  // Fetch users from API when the component mounts
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        const data = await fetchUsers();
+        setUsers(data);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    };
+    getUsers();
+  }, []);
+
 
   const handleNewTaskSave = async (taskData: Task) => {
     console.log("Sending task data:", taskData);
@@ -91,6 +113,16 @@ const TaskList = () => {
       }
     }
   };
+
+  const handleAssignTask = async (taskId: number, selectedUser: Users) => {
+    try {
+      const updatedTask = await assignTask(taskId, selectedUser.id);
+      setTasks(tasks.map(t => (t.id === updatedTask.id ? updatedTask : t)));
+    } catch (error) {
+      alert("Failed to assign task.");
+    }
+  };
+  
 
   if (loading) return <p className="text-center text-gray-500">Loading tasks...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
@@ -182,9 +214,35 @@ const TaskList = () => {
               <p className="text-sm text-gray-500">
                 <strong>Category:</strong> <span className="text-blue-500">{task.category.name}</span>
               </p>
-              <p className="text-sm text-gray-500">
+              {/* <p className="text-sm text-gray-500">
                 <strong>Assigned To:</strong> {task.assigned_to_id ? task.assigned_to_id.username : "Unassigned"}
-              </p>
+              </p> */}
+              {/* Users Dropdown */}
+              <div>
+                <label className="block text-gray-500 font-medium">Assigned To</label>
+                <select
+                      value={task.assigned_to || ""}
+                      onChange={(e) => {
+                        const selectedUserId = e.target.value;
+                        if (selectedUserId === "") {
+                          // Optionally handle unassignment here if needed.
+                        } else {
+                          const selectedUser = users.find(user => String(user.id) === selectedUserId);
+                          if (selectedUser) {
+                            handleAssignTask(task.id, selectedUser);
+                          }
+                        }
+                      }}
+                      className="ml-2 p-1 border rounded text-gray-700"
+                    >
+                      <option value="">Unassigned</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.email}
+                        </option>
+                      ))}
+                    </select>
+              </div>
 
               {/* Edit Button */}
               <div className="flex justify-between mt-2">

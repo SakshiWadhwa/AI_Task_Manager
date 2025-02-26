@@ -57,9 +57,9 @@ export const assignTask = async (taskId: number, userId: number) => {
   const token = localStorage.getItem("authToken");
   console.log("t: ", taskId, " u: ", userId)
   try {
-      const response = await axios.patch(`${API_URL}/task/${taskId}/assign_unassign_task/`, { 
-          user_id: userId,
-          headers: {
+      const response = await axios.patch(`${API_URL}/task/${taskId}/assign_unassign_task/`, 
+          {user_id: userId},
+          {headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
           },

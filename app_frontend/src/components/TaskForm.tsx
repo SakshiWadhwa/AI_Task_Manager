@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { fetchCategories } from "../services/categoryService"; // Import API service
-import {fetchUsers, assignTask} from "../services/authService" ;
 
 interface Task {
   id?: number;
@@ -9,17 +8,11 @@ interface Task {
   category_id: string;
   due_date: string;
   status: string;
-  assigned_to_id?: string;
 }
 
 interface Category {
   id: string;
   name: string;
-}
-
-interface Users {
-  id: string;
-  email: string;
 }
 
 interface TaskFormProps {
@@ -36,13 +29,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSave, onCancel }) => {
     category_id: task?.category_id || "",
     due_date: task?.due_date || "",
     status: task?.status || "Pending",
-    assigned_to_id: task?.assigned_to_id,
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [users, setUsers] = useState<Users[]>([]);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [isAssigning, setIsAssigning] = useState(false);
+  // const [isAssigning, setIsAssigning] = useState(false);
 
   // Reset formData whenever task changes
   useEffect(() => {
@@ -53,7 +44,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSave, onCancel }) => {
       category_id: task?.category_id || "",
       due_date: task?.due_date || "",
       status: task?.status || "pending",
-      assigned_to_id: task?.assigned_to_id,
     });
   }, [task]); // Runs whenever `task` changes
 
@@ -70,19 +60,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSave, onCancel }) => {
     getCategories();
   }, []);
 
-  // Fetch users from API when the component mounts
-  useEffect(() => {
-    const getUsers = async () => {
-      try {
-        const data = await fetchUsers();
-        setUsers(data);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      }
-    };
-    getUsers();
-  }, []);
-
   const validateForm = () => {
     let newErrors: { [key: string]: string } = {};
 
@@ -97,18 +74,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSave, onCancel }) => {
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-
-    console.log("formData: ", formData.id)
-    if (name === "assigned_to_id" && formData.id) {
-      setIsAssigning(true);
-      try {
-        await assignTask(formData.id, Number(value));
-        setIsAssigning(false);
-      } catch (error) {
-        console.error("Failed to assign task:", error);
-        setIsAssigning(false);
-      }
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -178,28 +143,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSave, onCancel }) => {
           {errors.category_id && <p className="text-red-500 text-sm">{errors.category_id}</p>}
         </div>
 
-         {/* Users Dropdown */}
-         <div>
-          <label className="block text-gray-700 font-medium">Assigned To</label>
-          <select
-            name="assigned_to_id"
-            value={formData.assigned_to_id ?? ""}
-            onChange={handleChange}
-            className="w-full p-2 border rounded focus:ring focus:ring-blue-300 text-gray-500"
-          >
-            <option value="">Assign Task</option>
-            {users.length > 0 ? (
-              users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.email}
-                </option>
-              ))
-            ) : (
-              <option disabled>Loading Users...</option>
-            )}
-          </select>
-          {isAssigning && <p className="text-blue-500 text-sm">Assigning task...</p>}
-        </div>
+         
 
         {/* Due Date Picker */}
         <div>
