@@ -46,6 +46,7 @@ export default function Navbar() {
       <div>
         <Link href="/">Home</Link>
         <Link href="/tasks" className="ml-4">Tasks</Link>
+        {isLoggedIn && <Link href="/assigned-tasks" className="ml-4">My Tasks</Link>}
       </div>
       <div>
         {isLoggedIn ? (

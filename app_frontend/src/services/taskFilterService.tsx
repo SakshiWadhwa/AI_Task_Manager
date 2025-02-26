@@ -20,3 +20,20 @@ export const fetchFilteredTasks = async (filters: { category_id?: string; status
         throw error;
     }
 };
+
+export const fetchAssignedTasks = async () => {
+    const token = localStorage.getItem("authToken");
+  
+    try {
+      const response = await axios.get(`${API_URL}/task/assigned_task_list/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching assigned tasks:", error);
+      throw error;
+    }
+  };
+  
