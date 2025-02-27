@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
 from .models import Task, Category, TaskComment
 from .serializers import CategorySerializer, TaskSerializer, TaskCommentSerializer
@@ -327,16 +328,18 @@ def task_comments(request, task_id):
     
 @api_view(['DELETE'])
 @permission_classes([permissions.IsAuthenticated])
-def delete_comment(request, comment_id):
+def delete_comment(request, task_id, comment_id):
     """
     API to delete a comment.
     Only the comment owner can delete it.
     """
-    try:
-        comment = TaskComment.objects.get(id=comment_id)
-    except TaskComment.DoesNotExist:
-        return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
-
+    # try:
+    #     task = Task.objects.get(id=task_id)
+    #     comment = TaskComment.objects.get(id=comment_id)
+    # except TaskComment.DoesNotExist:
+    #     return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
+    task = get_object_or_404(Task, id=task_id)
+    comment = get_object_or_404(TaskComment, id=comment_id, task=task)  # Ensure the comment belongs to the task
     if comment.user != request.user:
         return Response({"detail": "You do not have permission to delete this comment."}, 
                         status=status.HTTP_403_FORBIDDEN)

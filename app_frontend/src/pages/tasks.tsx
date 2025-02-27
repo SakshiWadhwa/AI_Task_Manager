@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchTasks, createTask, updateTasks, deleteTask } from "../services/taskService";
+import { fetchTasks, createTask, updateTasks, deleteTask, fetchComments, addTaskComment, deleteTaskComment } from "../services/taskService";
 import { fetchFilteredTasks } from "../services/taskFilterService"
 
 import TaskFilter from "../components/TaskFilter";
@@ -33,6 +33,9 @@ const TaskList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null); // New state for editing task
   const [users, setUsers] = useState<Users[]>([]);
+  const [comments, setComments] = useState<Record<number, string[]>>({});
+  const [newComment, setNewComment] = useState("");
+  const [editingComment, setEditingComment] = useState(null);
 
 
   useEffect(() => {
@@ -75,6 +78,21 @@ const TaskList = () => {
     getUsers();
   }, []);
 
+  useEffect(() => {
+    const getComments = async () => {
+      try {
+        const allComments = await Promise.all(tasks.map(task => fetchComments(task.id)));
+        const commentsMap = tasks.reduce((acc, task, index) => {
+          acc[task.id] = allComments[index];
+          return acc;
+        }, {});
+        setComments(commentsMap);
+      } catch (err) {
+        console.error("Failed to fetch comments.");
+      }
+    };
+    if (tasks.length) getComments();
+  }, [tasks]);
 
   const handleNewTaskSave = async (taskData: Task) => {
     console.log("Sending task data:", taskData);
@@ -123,6 +141,31 @@ const TaskList = () => {
     }
   };
   
+  const handleTaskCommentAdd = async (taskId: number, newComment: string) => {
+    if (!newComment.trim()) return;
+    try {
+      const comment = await addTaskComment(taskId, newComment);
+      setComments(prev => ({
+        ...prev,
+        [taskId]: [...(prev[taskId] || []), comment]
+      }));
+      setNewComment("");
+    } catch (err) {
+      alert("Failed to add comment.");
+    }
+  };
+
+  const handleDeleteComment = async (taskId: number, commentId: number) => {
+    try {
+      await deleteTaskComment(taskId, commentId);
+      setComments(prev => ({
+        ...prev,
+        [taskId]: prev[taskId].filter(comment => comment.id !== commentId)
+      }));
+    }catch (error) {
+      console.log("Failed to delete task comment")
+    }
+  }
 
   if (loading) return <p className="text-center text-gray-500">Loading tasks...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
@@ -219,9 +262,8 @@ const TaskList = () => {
               </p> */}
               {/* Users Dropdown */}
               <div>
-                <label className="block text-gray-500 font-medium">Assigned To</label>
-                <select
-                      value={task.assigned_to || ""}
+                <label className="text-sm font-semibold block text-gray-500 font-medium">Assigned To</label>
+                <select value={task.assigned_to || ""}
                       onChange={(e) => {
                         const selectedUserId = e.target.value;
                         if (selectedUserId === "") {
@@ -233,15 +275,58 @@ const TaskList = () => {
                           }
                         }
                       }}
-                      className="ml-2 p-1 border rounded text-gray-700"
-                    >
-                      <option value="">Unassigned</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.email}
-                        </option>
-                      ))}
-                    </select>
+                    className="ml-2 p-1 border rounded text-gray-700">
+                    <option value="">Unassigned</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.email}
+                      </option>
+                    ))}
+                 </select>
+              </div>
+
+              <div className="mt-3">
+                <h3 className="text-md font-semibold text-gray-500">Comments</h3>
+                <div className="max-h-40 overflow-y-auto bg-white p-2 border rounded">
+                  {comments[task.id]?.length > 0 ? (
+                    comments[task.id].map(comment => (
+                      <div key={comment.id} className="border-b p-2 flex justify-between items-center">
+                        <p className="text-sm text-gray-700">{comment.text}</p>
+                        <button
+                          className="text-red-500 text-xs"
+                          onClick={() => handleDeleteComment(task.id, comment.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No comments yet.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2 flex">
+                {/* <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="border rounded px-2 py-1 flex-grow text-gray-600"
+                  placeholder="Add a comment"
+                /> */}
+                <input
+                  type="text"
+                  value={newComment[task.id] || ""}
+                  onChange={(e) => setNewComment(prev => ({ ...prev, [task.id]: e.target.value }))}
+                  placeholder="Add a comment..."
+                  className="flex-1 border p-2 rounded text-sm text-gray-600"
+                />
+                <button
+                  className="ml-2 bg-blue-500 text-white px-3 py-1 rounded"
+                  onClick={() => handleTaskCommentAdd(task.id, newComment[task.id])}
+                >
+                  Add
+                </button>
               </div>
 
               {/* Edit Button */}
@@ -265,7 +350,7 @@ const TaskList = () => {
       )}
 
       {/* Pagination Controls */}
-      <div className="flex justify-center items-center mt-6 space-x-4">
+      <div className="flex justify-center items-center mt-6 space-x-4 text-gray-500">
       <button
           onClick={prevPage}
           disabled={currentPage === 1}
